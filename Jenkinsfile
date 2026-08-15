@@ -8,34 +8,28 @@ pipeline {
     stages {
         stage('1. Checkout') {
             steps {
-                echo 'Récupération du code...'
+                echo 'Récupération du code source...'
                 checkout scm
             }
         }
 
-        stage('2. Build Images') {
+        stage('2. Build & Tag Images') {
             steps {
-                echo 'Construction des images...'
-                sh 'docker compose build || docker-compose build'
+                echo 'Construction et tag direct des images Docker...'
+                sh "docker build -t ${DOCKERHUB_USER}/smarttask-backend:1.0 ./backend"
+                sh "docker build -t ${DOCKERHUB_USER}/smarttask-frontend:1.0 ./frontend"
             }
         }
 
-        stage('3. Tag Images') {
-            steps {
-                echo 'Tag des images pour Docker Hub...'
-                sh "docker tag smarttask-backend:1.0 ${DOCKERHUB_USER}/smarttask-backend:1.0"
-                sh "docker tag smarttask-frontend:1.0 ${DOCKERHUB_USER}/smarttask-frontend:1.0"
-            }
-        }
-
-        stage('4. Push to Docker Hub') {
+        stage('3. Push to Docker Hub') {
             steps {
                 echo 'Publication sur Docker Hub...'
-                script {
-                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-credentials') {
-                        sh "docker push ${DOCKERHUB_USER}/smarttask-backend:1.0"
-                        sh "docker push ${DOCKERHUB_USER}/smarttask-frontend:1.0"
-                    }
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push ${DOCKERHUB_USER}/smarttask-backend:1.0
+                        docker push ${DOCKERHUB_USER}/smarttask-frontend:1.0
+                    '''
                 }
             }
         }
