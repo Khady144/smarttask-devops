@@ -13,9 +13,9 @@ pipeline {
             }
         }
 
-        stage('2. Build & Tag Images') {
+        stage('2. Build Images') {
             steps {
-                echo 'Construction et tag direct des images Docker...'
+                echo 'Construction des images Docker...'
                 sh "docker build -t ${DOCKERHUB_USER}/smarttask-backend:1.0 ./backend"
                 sh "docker build -t ${DOCKERHUB_USER}/smarttask-frontend:1.0 ./frontend"
             }
@@ -25,11 +25,10 @@ pipeline {
             steps {
                 echo 'Publication sur Docker Hub...'
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh '''
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        docker push ${DOCKERHUB_USER}/smarttask-backend:1.0
-                        docker push ${DOCKERHUB_USER}/smarttask-frontend:1.0
-                    '''
+                    sh 'rm -rf ~/.docker/config.json'
+                    sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
+                    sh "docker push ${DOCKERHUB_USER}/smarttask-backend:1.0"
+                    sh "docker push ${DOCKERHUB_USER}/smarttask-frontend:1.0"
                 }
             }
         }
