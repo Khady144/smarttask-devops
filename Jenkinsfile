@@ -3,7 +3,6 @@ pipeline {
 
     environment {
         DOCKERHUB_USER = 'Sakhasow'
-        DOCKER_CONFIG  = "${WORKSPACE}/.docker"
     }
 
     stages {
@@ -27,10 +26,12 @@ pipeline {
                 echo 'Publication sur Docker Hub...'
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh '''
-                        mkdir -p "$DOCKER_CONFIG"
-                        printf '%s' "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        CLEAN_PASS=$(printf '%s' "$DOCKER_PASS" | tr -d '\\r\\n ')
+                        printf '%s' "$CLEAN_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+
                         docker push $DOCKERHUB_USER/smarttask-backend:1.0
                         docker push $DOCKERHUB_USER/smarttask-frontend:1.0
+
                         docker logout
                     '''
                 }
@@ -39,9 +40,6 @@ pipeline {
     }
 
     post {
-        always {
-            sh 'rm -rf "$DOCKER_CONFIG"'
-        }
         success {
             echo '✅ Pipeline exécuté avec succès et images publiées !'
         }
