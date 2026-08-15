@@ -31,10 +31,11 @@ pipeline {
         stage('4. Push to Docker Hub') {
             steps {
                 echo 'Publication sur Docker Hub...'
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh 'sh -c "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin"'
-                    sh "docker push ${DOCKERHUB_USER}/smarttask-backend:1.0"
-                    sh "docker push ${DOCKERHUB_USER}/smarttask-frontend:1.0"
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-credentials') {
+                        sh "docker push ${DOCKERHUB_USER}/smarttask-backend:1.0"
+                        sh "docker push ${DOCKERHUB_USER}/smarttask-frontend:1.0"
+                    }
                 }
             }
         }
@@ -42,7 +43,7 @@ pipeline {
 
     post {
         success {
-            echo '✅ Pipeline exécuté avec succès !'
+            echo '✅ Pipeline exécuté avec succès et images publiées !'
         }
         failure {
             echo '❌ Échec du Pipeline.'
