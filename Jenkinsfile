@@ -16,8 +16,8 @@ pipeline {
         stage('2. Build Images') {
             steps {
                 echo 'Construction des images Docker...'
-                sh "docker build -t ${DOCKERHUB_USER}/smarttask-backend:1.0 ./backend"
-                sh "docker build -t ${DOCKERHUB_USER}/smarttask-frontend:1.0 ./frontend"
+                sh "docker build -t ${env.DOCKERHUB_USER}/smarttask-backend:1.0 ./backend"
+                sh "docker build -t ${env.DOCKERHUB_USER}/smarttask-frontend:1.0 ./frontend"
             }
         }
 
@@ -25,21 +25,13 @@ pipeline {
             steps {
                 echo 'Publication sur Docker Hub...'
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh '''
+                    sh """
                         mkdir -p ~/.docker
-                        AUTH=$(echo -n "$DOCKER_USER:$DOCKER_PASS" | base64 | tr -d '\n')
-                        cat <<CONFIG > ~/.docker/config.json
-{
-    "auths": {
-        "https://index.docker.io/v1/": {
-            "auth": "$AUTH"
-        }
-    }
-}
-CONFIG
-                        docker push ${DOCKERHUB_USER}/smarttask-backend:1.0
-                        docker push ${DOCKERHUB_USER}/smarttask-frontend:1.0
-                    '''
+                        AUTH=\$(echo -n "\${DOCKER_USER}:\${DOCKER_PASS}" | base64 | tr -d '\\n')
+                        printf '{"auths":{"https://index.docker.io/v1/":{"auth":"%s"}}}' "\$AUTH" > ~/.docker/config.json
+                        docker push ${env.DOCKERHUB_USER}/smarttask-backend:1.0
+                        docker push ${env.DOCKERHUB_USER}/smarttask-frontend:1.0
+                    """
                 }
             }
         }
