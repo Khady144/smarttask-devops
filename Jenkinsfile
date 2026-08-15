@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_USER = 'Sakhasow'
+        DOCKERHUB_USER = 'sakhasow'
     }
 
     stages {
@@ -26,11 +26,13 @@ pipeline {
         stage('3. Connexion & Push') {
             steps {
                 echo 'Publication sur Docker Hub...'
-                withCredentials([string(credentialsId: 'DOCKERHUB_TOKEN', variable: 'TOKEN')]) {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh '''
-                        docker login -u Sakhasow -p "$TOKEN"
+                        printf '%s' "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+
                         docker push $DOCKERHUB_USER/smarttask-backend:1.0
                         docker push $DOCKERHUB_USER/smarttask-frontend:1.0
+
                         docker logout
                     '''
                 }
@@ -43,7 +45,7 @@ pipeline {
             sh 'docker logout || true'
         }
         success {
-            echo '✅ SUCCÈS : Images publiées sur Docker Hub !'
+            echo '✅ SUCCÈS : Pipeline exécuté et images publiées !'
         }
         failure {
             echo '❌ ÉCHEC du pipeline.'
