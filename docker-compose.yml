@@ -1,13 +1,11 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:15-alpine
     container_name: smarttask-db
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgrespassword
-      POSTGRES_DB: smarttask
+      POSTGRES_USER: smarttask_user
+      POSTGRES_PASSWORD: smarttask_pass
+      POSTGRES_DB: smarttask_db
     ports:
       - "5432:5432"
     restart: always
@@ -19,10 +17,9 @@ services:
       - "5000:5000"
     environment:
       - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_USER=postgres
-      - DB_PASSWORD=postgrespassword
-      - DB_NAME=smarttask
+      - POSTGRES_USER=smarttask_user
+      - POSTGRES_PASSWORD=smarttask_pass
+      - POSTGRES_DB=smarttask_db
     depends_on:
       - postgres
     restart: always
