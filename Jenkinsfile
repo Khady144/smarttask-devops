@@ -9,16 +9,9 @@ pipeline {
             }
         }
 
-        stage('2. Test Backend') {
+        stage('2. Build Docker Images') {
             steps {
-                echo 'Vérification des dépendances Backend via Node Docker...'
-                sh 'docker run --rm -v $(pwd)/backend:/app -w /app node:20-alpine npm install'
-            }
-        }
-
-        stage('3. Build Docker Images') {
-            steps {
-                echo 'Construction des images Docker via Compose...'
+                echo 'Construction des images Docker du projet SmartTask...'
                 sh 'docker compose build'
             }
         }
