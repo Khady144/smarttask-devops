@@ -25,10 +25,21 @@ pipeline {
             steps {
                 echo 'Publication sur Docker Hub...'
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh 'rm -rf ~/.docker/config.json'
-                    sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
-                    sh "docker push ${DOCKERHUB_USER}/smarttask-backend:1.0"
-                    sh "docker push ${DOCKERHUB_USER}/smarttask-frontend:1.0"
+                    sh '''
+                        mkdir -p ~/.docker
+                        AUTH=$(echo -n "$DOCKER_USER:$DOCKER_PASS" | base64 | tr -d '\n')
+                        cat <<CONFIG > ~/.docker/config.json
+{
+    "auths": {
+        "https://index.docker.io/v1/": {
+            "auth": "$AUTH"
+        }
+    }
+}
+CONFIG
+                        docker push ${DOCKERHUB_USER}/smarttask-backend:1.0
+                        docker push ${DOCKERHUB_USER}/smarttask-frontend:1.0
+                    '''
                 }
             }
         }
