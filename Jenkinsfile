@@ -23,8 +23,8 @@ pipeline {
         stage('3. Tag Images') {
             steps {
                 echo 'Tag des images pour Docker Hub...'
-                sh "docker tag smarttask-devops-backend ${DOCKERHUB_USER}/smarttask-backend:1.0 || docker tag smarttask-backend:1.0 ${DOCKERHUB_USER}/smarttask-backend:1.0"
-                sh "docker tag smarttask-devops-frontend ${DOCKERHUB_USER}/smarttask-frontend:1.0 || docker tag smarttask-frontend:1.0 ${DOCKERHUB_USER}/smarttask-frontend:1.0"
+                sh "docker tag smarttask-backend:1.0 ${DOCKERHUB_USER}/smarttask-backend:1.0"
+                sh "docker tag smarttask-frontend:1.0 ${DOCKERHUB_USER}/smarttask-frontend:1.0"
             }
         }
 
@@ -32,7 +32,7 @@ pipeline {
             steps {
                 echo 'Publication sur Docker Hub...'
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
+                    sh 'sh -c "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin"'
                     sh "docker push ${DOCKERHUB_USER}/smarttask-backend:1.0"
                     sh "docker push ${DOCKERHUB_USER}/smarttask-frontend:1.0"
                 }
