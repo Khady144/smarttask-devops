@@ -6,31 +6,31 @@ pipeline {
     }
 
     stages {
-        stage('1. Checkout Code') {
+        stage('1. Checkout') {
             steps {
-                echo 'Récupération du code source depuis GitHub...'
-                git branch: env.BRANCH_NAME ?: 'main', url: 'https://github.com/Khady144/smarttask-devops.git'
+                echo 'Récupération du code...'
+                checkout scm
             }
         }
 
-        stage('2. Build Docker Images') {
+        stage('2. Build Images') {
             steps {
-                echo 'Construction des images Docker...'
-                sh 'docker-compose build'
+                echo 'Construction des images...'
+                sh 'docker compose build || docker-compose build'
             }
         }
 
         stage('3. Tag Images') {
             steps {
-                echo 'Attribution des tags Docker Hub...'
-                sh "docker tag smarttask-backend:1.0 ${DOCKERHUB_USER}/smarttask-backend:1.0"
-                sh "docker tag smarttask-frontend:1.0 ${DOCKERHUB_USER}/smarttask-frontend:1.0"
+                echo 'Tag des images pour Docker Hub...'
+                sh "docker tag smarttask-devops-backend ${DOCKERHUB_USER}/smarttask-backend:1.0 || docker tag smarttask-backend:1.0 ${DOCKERHUB_USER}/smarttask-backend:1.0"
+                sh "docker tag smarttask-devops-frontend ${DOCKERHUB_USER}/smarttask-frontend:1.0 || docker tag smarttask-frontend:1.0 ${DOCKERHUB_USER}/smarttask-frontend:1.0"
             }
         }
 
         stage('4. Push to Docker Hub') {
             steps {
-                echo 'Connexion et publication sur Docker Hub...'
+                echo 'Publication sur Docker Hub...'
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
                     sh "docker push ${DOCKERHUB_USER}/smarttask-backend:1.0"
@@ -42,7 +42,7 @@ pipeline {
 
     post {
         success {
-            echo '✅ Pipeline exécuté avec succès et images publiées sur Docker Hub !'
+            echo '✅ Pipeline exécuté avec succès !'
         }
         failure {
             echo '❌ Échec du Pipeline.'
