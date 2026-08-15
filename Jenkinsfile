@@ -28,6 +28,7 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh '''
                         mkdir -p "$DOCKER_CONFIG"
+                        echo '{"auths":{}}' > "$DOCKER_CONFIG/config.json"
                         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
                     '''
                     sh "docker push ${DOCKERHUB_USER}/smarttask-backend:1.0"
@@ -39,7 +40,6 @@ pipeline {
 
     post {
         always {
-            // Nettoyage automatique du dossier temporaire de session
             sh "rm -rf ${WORKSPACE}/.docker"
         }
         success {
