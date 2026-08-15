@@ -38,6 +38,16 @@ pipeline {
                 }
             }
         }
+
+        stage('4. Déploiement CD') {
+            steps {
+                echo 'Lancement du déploiement continu...'
+                sh '''
+                    docker compose pull || docker-compose pull
+                    docker compose up -d --remove-orphans || docker-compose up -d --remove-orphans
+                '''
+            }
+        }
     }
 
     post {
@@ -45,7 +55,7 @@ pipeline {
             sh 'docker logout || true'
         }
         success {
-            echo '✅ SUCCÈS : Pipeline exécuté et images publiées !'
+            echo '✅ SUCCÈS : Application construite, publiée et déployée avec succès !'
         }
         failure {
             echo '❌ ÉCHEC du pipeline.'
