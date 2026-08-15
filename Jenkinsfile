@@ -28,7 +28,7 @@ pipeline {
                 echo 'Publication sur Docker Hub...'
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh '''
-                        printf '%s' "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        printf '%s' "$DOCKER_PASS" | docker login -u sakhasow --password-stdin
 
                         docker push $DOCKERHUB_USER/smarttask-backend:1.0
                         docker push $DOCKERHUB_USER/smarttask-frontend:1.0
