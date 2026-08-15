@@ -6,32 +6,34 @@ pipeline {
     }
 
     stages {
-        stage('1. Checkout') {
+        stage('1. Nettoyage & Checkout') {
             steps {
-                echo 'Récupération du code source...'
+                echo 'Nettoyage des sessions Docker et récupération du code...'
+                sh '''
+                    docker logout || true
+                    rm -f ~/.docker/config.json || true
+                '''
                 checkout scm
             }
         }
 
-        stage('2. Build Images') {
+        stage('2. Build & Push') {
             steps {
-                echo 'Construction des images Docker...'
-                sh 'docker build -t $DOCKERHUB_USER/smarttask-backend:1.0 ./backend'
-                sh 'docker build -t $DOCKERHUB_USER/smarttask-frontend:1.0 ./frontend'
-            }
-        }
-
-        stage('3. Envoi vers Docker Hub') {
-            steps {
-                echo 'Publication sur Docker Hub...'
+                echo 'Connexion, construction et publication des images...'
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh '''
-                        CLEAN_PASS=$(printf '%s' "$DOCKER_PASS" | tr -d '\\r\\n ')
-                        printf '%s' "$CLEAN_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        # 1. Connexion propre à Docker Hub
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
 
+                        # 2. Construction des images
+                        docker build -t $DOCKERHUB_USER/smarttask-backend:1.0 ./backend
+                        docker build -t $DOCKERHUB_USER/smarttask-frontend:1.0 ./frontend
+
+                        # 3. Envoi sur Docker Hub
                         docker push $DOCKERHUB_USER/smarttask-backend:1.0
                         docker push $DOCKERHUB_USER/smarttask-frontend:1.0
 
+                        # 4. Déconnexion
                         docker logout
                     '''
                 }
@@ -40,6 +42,9 @@ pipeline {
     }
 
     post {
+        always {
+            sh 'docker logout || true'
+        }
         success {
             echo '✅ Pipeline exécuté avec succès et images publiées !'
         }
