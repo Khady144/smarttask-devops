@@ -1,11 +1,30 @@
 version: '3.8'
 
 services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: smarttask-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: smarttask
+    ports:
+      - "5432:5432"
+    restart: always
+
   backend:
     image: sakhasow/smarttask-backend:1.0
     container_name: smarttask-backend
     ports:
       - "5000:5000"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgrespassword
+      - DB_NAME=smarttask
+    depends_on:
+      - postgres
     restart: always
 
   frontend:
@@ -13,6 +32,9 @@ services:
     container_name: smarttask-frontend
     ports:
       - "8080:80"
+    environment:
+      - REACT_APP_API_URL=http://192.168.186.204:5000
+      - VITE_API_URL=http://192.168.186.204:5000
     depends_on:
       - backend
     restart: always
