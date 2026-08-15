@@ -12,7 +12,7 @@ pipeline {
         stage('2. Build Docker Images') {
             steps {
                 echo 'Construction des images Docker du projet SmartTask...'
-                sh 'docker compose build'
+                sh 'docker-compose build'
             }
         }
     }
