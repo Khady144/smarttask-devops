@@ -28,10 +28,10 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh '''
                         mkdir -p "$DOCKER_CONFIG"
-                        AUTH_STR=$(printf "%s:%s" "$DOCKER_USER" "$DOCKER_PASS" | base64 | tr -d '\\r\\n')
-                        printf '{"auths":{"https://index.docker.io/v1/":{"auth":"%s"}}}' "$AUTH_STR" > "$DOCKER_CONFIG/config.json"
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
                         docker push $DOCKERHUB_USER/smarttask-backend:1.0
                         docker push $DOCKERHUB_USER/smarttask-frontend:1.0
+                        docker logout
                     '''
                 }
             }
