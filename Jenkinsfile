@@ -9,10 +9,10 @@ pipeline {
             }
         }
 
-        stage('2. Test & Dependencies') {
+        stage('2. Test Backend') {
             steps {
-                echo 'Vérification des dépendances Backend...'
-                sh 'cd backend && npm install'
+                echo 'Vérification des dépendances Backend via Node Docker...'
+                sh 'docker run --rm -v $(pwd)/backend:/app -w /app node:20-alpine npm install'
             }
         }
 
