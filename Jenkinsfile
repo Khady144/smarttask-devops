@@ -22,22 +22,14 @@ pipeline {
             }
         }
 
-        stage('3. Push to Docker Hub') {
+        stage('3. Envoi vers Docker Hub') {
             steps {
                 echo 'Publication sur Docker Hub...'
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh '''
                         mkdir -p "$DOCKER_CONFIG"
-                        AUTH_STR=$(echo -n "$DOCKER_USER:$DOCKER_PASS" | base64 | tr -d '\r\n')
-                        cat <<CONFIG > "$DOCKER_CONFIG/config.json"
-{
-  "auths": {
-    "https://index.docker.io/v1/": {
-      "auth": "$AUTH_STR"
-    }
-  }
-}
-CONFIG
+                        AUTH_STR=$(printf "%s:%s" "$DOCKER_USER" "$DOCKER_PASS" | base64 | tr -d '\\r\\n')
+                        printf '{"auths":{"https://index.docker.io/v1/":{"auth":"%s"}}}' "$AUTH_STR" > "$DOCKER_CONFIG/config.json"
                         docker push $DOCKERHUB_USER/smarttask-backend:1.0
                         docker push $DOCKERHUB_USER/smarttask-frontend:1.0
                     '''
