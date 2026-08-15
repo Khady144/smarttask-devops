@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         DOCKERHUB_USER = 'Sakhasow'
+        DOCKER_CONFIG  = "${WORKSPACE}/.docker"
     }
 
     stages {
@@ -16,8 +17,8 @@ pipeline {
         stage('2. Build Images') {
             steps {
                 echo 'Construction des images Docker...'
-                sh "docker build -t ${env.DOCKERHUB_USER}/smarttask-backend:1.0 ./backend"
-                sh "docker build -t ${env.DOCKERHUB_USER}/smarttask-frontend:1.0 ./frontend"
+                sh "docker build -t ${DOCKERHUB_USER}/smarttask-backend:1.0 ./backend"
+                sh "docker build -t ${DOCKERHUB_USER}/smarttask-frontend:1.0 ./frontend"
             }
         }
 
@@ -25,19 +26,22 @@ pipeline {
             steps {
                 echo 'Publication sur Docker Hub...'
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh """
-                        mkdir -p ~/.docker
-                        AUTH=\$(echo -n "\${DOCKER_USER}:\${DOCKER_PASS}" | base64 | tr -d '\\n')
-                        printf '{"auths":{"https://index.docker.io/v1/":{"auth":"%s"}}}' "\$AUTH" > ~/.docker/config.json
-                        docker push ${env.DOCKERHUB_USER}/smarttask-backend:1.0
-                        docker push ${env.DOCKERHUB_USER}/smarttask-frontend:1.0
-                    """
+                    sh '''
+                        mkdir -p "$DOCKER_CONFIG"
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                    '''
+                    sh "docker push ${DOCKERHUB_USER}/smarttask-backend:1.0"
+                    sh "docker push ${DOCKERHUB_USER}/smarttask-frontend:1.0"
                 }
             }
         }
     }
 
     post {
+        always {
+            // Nettoyage automatique du dossier temporaire de session
+            sh "rm -rf ${WORKSPACE}/.docker"
+        }
         success {
             echo '✅ Pipeline exécuté avec succès et images publiées !'
         }
